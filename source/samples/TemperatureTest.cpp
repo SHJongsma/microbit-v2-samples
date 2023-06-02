@@ -1,6 +1,7 @@
 #include "MicroBit.h"
 #include "Tests.h"
 
+/*
 void
 temperature_test()
 {
@@ -10,4 +11,4 @@ temperature_test()
         uBit.display.scroll(uBit.thermometer.getTemperature());
     }
 }
-
+*/
