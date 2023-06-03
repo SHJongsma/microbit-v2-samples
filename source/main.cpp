@@ -31,7 +31,6 @@ void temperature_test() {
         //uBit.display.print("A");
         uBit.sleep(250);
         if(button_a_pressed) {
-           button_a_pressed = false;
            break;
         }
     }
@@ -69,6 +68,9 @@ void temperature_test() {
         break;
       }
     }
+
+    // Reset boolean to false
+    button_a_pressed = false;
   }
 
   // Return
