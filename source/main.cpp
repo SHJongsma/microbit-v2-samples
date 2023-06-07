@@ -79,6 +79,22 @@ void temperature_test() {
 
 } // Namespace
 
+/****
+
+Idee:
+
+Wanneer de temperatuur van het afvoerwater binnen 5 graden van de temperatuur van de BBC Micro temperatuursensor zit, dan wordt
+de kleur gelijk aan de kleurtemperatuur van 3000 K. Bij een groter verschil (het afvoer water wordt aangenomen warmer te zijn
+dan de BBC Micro) verloopt de kleur van Signaalrood (#155,36,35) --- voor de maximale watertemperatuur --- naar koningsblauw (#65, 105, 225) --- voor de actuele BBC Micro temperatuur (Nog een geschikt verloop uitzoeken van rood naar blauw).
+
+Zaken waar vermoedelijk aandacht aan moet worden besteed:
+- Bij het aanzetten van het licht (opnieuw) verbinding maken met de LED lamp (en de actuele kleur instellen)
+- Uitlezen van de temperatuursensor
+
+
+
+****/
+
 int main() {
     ::uBit.init();
 
