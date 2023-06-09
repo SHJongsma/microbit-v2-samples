@@ -7,35 +7,29 @@ namespace {
 
 MicroBit uBit;
 
-int button_a_pressed = false;
+shj::Logger *logger;
+
 int button_b_pressed = false;
 
-/*
-void onButtonA(MicroBitEvent) {
-  button_a_pressed = true;
-}
-
-
 void onButtonB(MicroBitEvent) {
+  logger->info("Button B pressed.");
   button_b_pressed = true;
 }
-*/
+
 
 void temperature_test() {
 
   char temp[4];
 
-  //uBit.messageBus.listen(MICROBIT_ID_BUTTON_A, MICROBIT_BUTTON_EVT_CLICK, onButtonA);
-  //uBit.messageBus.listen(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, onButtonB);
+  uBit.messageBus.listen(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, onButtonB);
 
   while (true) {
 
     // Wait for button A press.
-    while(!button_a_pressed) {
-        //uBit.display.print("A");
+    while (!button_b_pressed) {
         uBit.sleep(250);
-        if(button_a_pressed) {
-           break;
+        if (button_b_pressed) {
+            break;
         }
     }
 
@@ -43,6 +37,8 @@ void temperature_test() {
 
     // Display temperature
     while(1) {
+
+      logger->debug("temperatur_test ~ showing temperature on display.");
 
       int T = uBit.thermometer.getTemperature();
 
@@ -72,9 +68,6 @@ void temperature_test() {
         break;
       }
     }
-
-    // Reset boolean to false
-    button_a_pressed = false;
   }
 
   // Return
@@ -195,15 +188,8 @@ void debugOut(void *intervalPtr) {
     }
 }
 
-shj::Logger *logger;
 
-void onButtonA(MicroBitEvent) {
-  logger->debug("Button A pressed.");
-}
 
-void onButtonB(MicroBitEvent) {
-  logger->info("Button B pressed.");
-}
 
 
 void printMemoryAndStop() {
@@ -225,12 +211,11 @@ int main() {
   // Create a logger object
   logger = new shj::Logger(&uBit);
 
-  uBit.messageBus.listen(MICROBIT_ID_BUTTON_A, MICROBIT_BUTTON_EVT_CLICK, onButtonA);
-  uBit.messageBus.listen(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, onButtonB);
-
-  //uBit.sleep(200); // Wait some time for the logger to be created
+  //uBit.messageBus.listen(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, onButtonB);
 
   logger->debug("main ~ Program started.");
+
+  ::temperature_test();
 
   //printMemoryAndStop();
 
