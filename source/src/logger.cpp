@@ -36,6 +36,31 @@ void Logger::debug(const std::string &msg) {
   return;
 }
 
+void Logger::info(const std::string &msg) {
+
+  producer(level_t::info, msg);
+
+  // Return
+  return;
+}
+
+void Logger::warn(const std::string &msg) {
+
+  producer(level_t::warn, msg);
+
+  // Return
+  return;
+}
+
+void Logger::error(const std::string &msg) {
+
+  producer(level_t::error, msg);
+
+  // Return
+  return;
+}
+
+
 
 void Logger::producer(const level_t level, const std::string &msg) {
 
