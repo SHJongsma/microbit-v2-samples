@@ -193,12 +193,16 @@ void debugOut(void *intervalPtr) {
     }
 }
 
+shj::Logger *logger;
+
 int main() {
-    debugBufferInit();
+  ///  debugBufferInit();
     uBit.init();
     uBit.display.print("Start"); // will pause here a little while while showing Start
 
-    shj::Logger logger(&uBit);
+    logger = new shj::Logger(&uBit);
+
+/*
     // gives you time to open the Serial terminal if you need to
     // initialize the data
     data.count = 0;
@@ -208,6 +212,16 @@ int main() {
     uBit.messageBus.listen(DATA_ID,NEW_DATA,consumer);
     create_fiber(producer); //
     create_fiber(debugOut,(void*)&dumpInterval); // send debug every 5 sec
+
+*/
+
+        uBit.sleep(200); // every 5 sec
+
+  logger->debug("Bla bla bla.");
+
+    while(1)
+        uBit.sleep(200); // every 5 sec
+
     release_fiber(); // finished with setup, release the fibers!!
 }
 
