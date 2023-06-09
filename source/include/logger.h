@@ -76,9 +76,6 @@ public:
   void warn(const std::string &msg);
   void error(const std::string &msg);
 
-
-
-
 private:
 
   class LogQueue {
@@ -109,10 +106,6 @@ private:
 
   void change_level(MicroBitEvent /*evt*/);
 
-
-  void send_buffer();
-  void buffer_init();
-
   const std::string m_line_end = "\r\n";
   static const int m_buffer_size = 80;
   static const int m_max_queue   = 10;
@@ -137,14 +130,6 @@ namespace {
 void create_consumer(void *combined) {
 
   const ::Combine *c = ((::Combine *) combined);
-/*
-  MicroBit *mbit;
-  int id;
-  int value;
-  shj::Logger *logger;
-  void (shj::Logger::* entry_fn)(MicroBitEvent);
-*/
-
 
   c->mbit->messageBus.listen(c->id, c->value, c->logger, c->logger_fn);
   c->mbit->messageBus.listen(MICROBIT_ID_BUTTON_A, MICROBIT_BUTTON_EVT_CLICK, c->logger, c->button_fn);

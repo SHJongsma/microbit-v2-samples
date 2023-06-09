@@ -11,19 +11,16 @@ namespace shj {
 /*****
 
 Idee:
-- debug, info, etc. slaan berichten op in een buffer (zijn producers) en laten aan de message bus weten dat er een
+x debug, info, etc. slaan berichten op in een buffer (zijn producers) en laten aan de message bus weten dat er een
  `event' is gebeurd, te weten dat er een nieuw bericht verzonden moet worden
-- De consumer wacht op een event, wanneer deze gebeurt, dan haalt hij het bericht op en probeert deze
+x De consumer wacht op een event, wanneer deze gebeurt, dan haalt hij het bericht op en probeert deze
   te versturen via de seriële connectie
-- Het bericht wordt vervolgens uit de buffer verwijderd
+x Het bericht wordt vervolgens uit de buffer verwijderd
 
 Nog uitzoeken hoe ik in de buffer bijhoudt waar welk bericht staat ==> Linked list, met log-level, bericht en pointer naar volgende
 bericht.
 
-- Op basis van het aantal keren dat op knop A gedrukt wordt het log-niveau aanpassen
-
-
-
+x Op basis van het aantal keren dat op knop A gedrukt wordt het log-niveau aanpassen
 
 *******/
 
@@ -59,8 +56,6 @@ void Logger::error(const std::string &msg) {
   // Return
   return;
 }
-
-
 
 void Logger::producer(const level_t level, const std::string &msg) {
 
@@ -214,35 +209,6 @@ void Logger::process() {
 
   // Return
   return;
-}
-
-// must call this from a fiber!!
-void Logger::send_buffer() {
-    int size = m_buffer_indx;
-    m_buffer_indx = m_buffer_size + 2; // block any further additions until write is finished
-
-    // add newline
-    m_buffer[size] = '\r';
-    ++size;
-    m_buffer[size] = '\n';
-    ++size;
-    m_buffer[size] = '\0'; // terminate buffer
-
-    // Send the buffer
-    int rtn = m_mbit->serial.send((uint8_t *)m_buffer, size);
-    while (rtn == MICROBIT_SERIAL_IN_USE) {
-        // try again later, wait for TX buffer empty
-        fiber_wait_for_event(MICROBIT_ID_NOTIFY, MICROBIT_SERIAL_EVT_TX_EMPTY);
-        rtn = m_mbit->serial.send((uint8_t *)m_buffer, size);
-    }
-    buffer_init(); // clear buffer and put in leading \r\n
-}
-
-void Logger::buffer_init() {
-    m_buffer[0]   = '\r';
-    m_buffer[1]   = '\n';
-    m_buffer[2]   = '\0'; // terminate buffer
-    m_buffer_indx = 2;;
 }
 
 } // Closing brace for namespace
