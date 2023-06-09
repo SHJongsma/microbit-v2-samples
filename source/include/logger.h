@@ -24,7 +24,8 @@ struct Combine {
   int id;
   int value;
   shj::Logger *logger;
-  void (shj::Logger::* entry_fn)(MicroBitEvent);
+  void (shj::Logger::* logger_fn)(MicroBitEvent);
+  void (shj::Logger::* button_fn)(MicroBitEvent);
 
 
 };
@@ -46,6 +47,9 @@ private:
 
 public:
 
+  // Some enum class stuff
+  // from: https://stackoverflow.com/a/15451002
+
   enum class level_t {debug, info, warn, error};
 
   // Constructor
@@ -55,7 +59,7 @@ public:
     // Initialize the buffer
     //buffer_init(); // OBSOLETE?
 
-    m_combine = {m_mbit, DATA_ID, NEW_LOG_MESSAGE, this, &Logger::consumer};
+    m_combine = {m_mbit, DATA_ID, NEW_LOG_MESSAGE, this, &Logger::consumer, &Logger::change_level};
 
     m_mbit->display.print("A");
 
@@ -103,6 +107,8 @@ private:
   // Sends the serial data if the log-level is sufficiently high, otherwise the message is discarded
   void consumer(MicroBitEvent /*evt*/);
 
+  void change_level(MicroBitEvent /*evt*/);
+
 
   void send_buffer();
   void buffer_init();
@@ -140,8 +146,8 @@ void create_consumer(void *combined) {
 */
 
 
-  c->mbit->messageBus.listen(c->id, c->value, c->logger, c->entry_fn);
-
+  c->mbit->messageBus.listen(c->id, c->value, c->logger, c->logger_fn);
+  c->mbit->messageBus.listen(MICROBIT_ID_BUTTON_A, MICROBIT_BUTTON_EVT_CLICK, c->logger, c->button_fn);
 }
 
 }

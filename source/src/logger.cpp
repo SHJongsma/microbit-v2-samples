@@ -108,6 +108,30 @@ void Logger::consumer(MicroBitEvent /*evt*/) {
 }
 
 
+void Logger::change_level(MicroBitEvent /*evt*/) {
+
+  switch (m_verbose) {
+    case level_t::debug:
+      m_verbose = level_t::info;
+      info("Logger::change_level ~ Changed to log-level: INFO.");
+      break;
+    case level_t::info:
+      m_verbose = level_t::warn;
+      break;
+    case level_t::warn:
+      m_verbose = level_t::error;
+      break;
+    case level_t::error:
+      m_verbose = level_t::debug;
+      info("Logger::change_level ~ Changed to log-level: DEBUG.");
+      break;
+  } // Closing brace for switch
+
+  // Return
+  return;
+}
+
+
 void Logger::process() {
 
   int indx = 0;

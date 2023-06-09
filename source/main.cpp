@@ -10,21 +10,23 @@ MicroBit uBit;
 int button_a_pressed = false;
 int button_b_pressed = false;
 
+/*
 void onButtonA(MicroBitEvent) {
   button_a_pressed = true;
 }
 
+
 void onButtonB(MicroBitEvent) {
   button_b_pressed = true;
 }
-
+*/
 
 void temperature_test() {
 
   char temp[4];
 
-  uBit.messageBus.listen(MICROBIT_ID_BUTTON_A, MICROBIT_BUTTON_EVT_CLICK, onButtonA);
-  uBit.messageBus.listen(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, onButtonB);
+  //uBit.messageBus.listen(MICROBIT_ID_BUTTON_A, MICROBIT_BUTTON_EVT_CLICK, onButtonA);
+  //uBit.messageBus.listen(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, onButtonB);
 
   while (true) {
 
@@ -195,12 +197,37 @@ void debugOut(void *intervalPtr) {
 
 shj::Logger *logger;
 
+void onButtonA(MicroBitEvent) {
+  logger->debug("Button A pressed.");
+}
+
+void onButtonB(MicroBitEvent) {
+  logger->info("Button B pressed.");
+}
+
+
+void printMemoryAndStop() {
+    int blockSize = 64; int i = 1;
+    uBit.serial.printf("Checking memory with blocksize %d char ...\r\n", blockSize);
+    while (true) {
+        char *p = (char *) malloc(blockSize);
+        if (p == NULL) break; // this actually never happens, get a panic(20) outOfMemory first
+        uBit.serial.printf("%d + %d/16 K\r\n", i/16, i%16);
+        ++i;
+    }
+}
+
+
 int main() {
   ///  debugBufferInit();
     uBit.init();
     uBit.display.print("Start"); // will pause here a little while while showing Start
 
     logger = new shj::Logger(&uBit);
+
+
+    uBit.messageBus.listen(MICROBIT_ID_BUTTON_A, MICROBIT_BUTTON_EVT_CLICK, onButtonA);
+    uBit.messageBus.listen(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, onButtonB);
 
 /*
     // gives you time to open the Serial terminal if you need to
@@ -215,12 +242,17 @@ int main() {
 
 */
 
-        uBit.sleep(200); // every 5 sec
+  uBit.sleep(200); // Wait some time for the logger to be created
 
   logger->debug("Bla bla bla.");
 
-    while(1)
-        uBit.sleep(200); // every 5 sec
+  //printMemoryAndStop();
+/*
+    while(1) {
+        uBit.sleep(1000); // every 1 sec
+        logger->info("New message.");
+  }
+*/
 
     release_fiber(); // finished with setup, release the fibers!!
 }
