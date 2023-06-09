@@ -219,42 +219,22 @@ void printMemoryAndStop() {
 
 
 int main() {
-  ///  debugBufferInit();
-    uBit.init();
-    uBit.display.print("Start"); // will pause here a little while while showing Start
+  uBit.init();
+  uBit.display.print("Start"); // will pause here a little while while showing Start
 
-    logger = new shj::Logger(&uBit);
+  // Create a logger object
+  logger = new shj::Logger(&uBit);
 
+  uBit.messageBus.listen(MICROBIT_ID_BUTTON_A, MICROBIT_BUTTON_EVT_CLICK, onButtonA);
+  uBit.messageBus.listen(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, onButtonB);
 
-    uBit.messageBus.listen(MICROBIT_ID_BUTTON_A, MICROBIT_BUTTON_EVT_CLICK, onButtonA);
-    uBit.messageBus.listen(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, onButtonB);
+  //uBit.sleep(200); // Wait some time for the logger to be created
 
-/*
-    // gives you time to open the Serial terminal if you need to
-    // initialize the data
-    data.count = 0;
-    data.c = 'A';
-
-    // register consumer to listen to produce
-    uBit.messageBus.listen(DATA_ID,NEW_DATA,consumer);
-    create_fiber(producer); //
-    create_fiber(debugOut,(void*)&dumpInterval); // send debug every 5 sec
-
-*/
-
-  uBit.sleep(200); // Wait some time for the logger to be created
-
-  logger->debug("Bla bla bla.");
+  logger->debug("main ~ Program started.");
 
   //printMemoryAndStop();
-/*
-    while(1) {
-        uBit.sleep(1000); // every 1 sec
-        logger->info("New message.");
-  }
-*/
 
-    release_fiber(); // finished with setup, release the fibers!!
+  release_fiber(); // finished with setup, release the fibers!!
 }
 
 

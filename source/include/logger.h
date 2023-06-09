@@ -53,22 +53,19 @@ public:
 
   // Constructor
   Logger(MicroBit *m) :
-    m_mbit(m) {
-
-    // Initialize the buffer
-    //buffer_init(); // OBSOLETE?
-
-    m_combine = {m_mbit, DATA_ID, NEW_LOG_MESSAGE, this, &Logger::consumer, &Logger::change_level};
-
-    m_mbit->display.print("A");
+    m_mbit(m),
+    m_combine{m_mbit, DATA_ID, NEW_LOG_MESSAGE, this, &Logger::consumer, &Logger::change_level} {
 
     // Create the consumer
     create_fiber(::create_consumer, (void *) &m_combine);
-    //m_mbit->messageBus.listen(DATA_ID, NEW_LOG_MESSAGE, this, &Logger::consumer);
 
-    m_mbit->display.print("B");
+    fiber_sleep(200);
+
+    info("Logger::Logger ~ Initialised on default log-level: DEBUG.");
+
+    // Return
+    return;
   };
-
 
   void debug(const std::string &msg);
   void info(const std::string &msg);
@@ -125,7 +122,6 @@ private:
 
 namespace {
 
-
 void create_consumer(void *combined) {
 
   const shj::Combine *c = ((shj::Combine *) combined);
@@ -137,6 +133,6 @@ void create_consumer(void *combined) {
   return;
 }
 
-}
+} // Closing brace for anonymous namespace
 
 #endif // LOGGER
