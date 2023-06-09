@@ -17,8 +17,14 @@ class Logger;
 
 namespace {
 
-struct Combine {
+// Forward declaration
+void create_consumer(void *combined);
 
+} // Closing brace for anonymous namespace
+
+namespace shj {
+
+struct Combine {
 
   MicroBit *mbit;
   int id;
@@ -27,16 +33,9 @@ struct Combine {
   void (shj::Logger::* logger_fn)(MicroBitEvent);
   void (shj::Logger::* button_fn)(MicroBitEvent);
 
-
 };
 
-// Forward declaration
-void create_consumer(void *combined);
 
-
-} // Closing brace for anonymous namespace
-
-namespace shj {
 
 class Logger {
 
@@ -117,7 +116,7 @@ private:
 
   LogQueue *m_first = nullptr;
 
-  ::Combine m_combine;
+  shj::Combine m_combine;
 
 }; // Closing brace for class definintion
 
@@ -129,10 +128,13 @@ namespace {
 
 void create_consumer(void *combined) {
 
-  const ::Combine *c = ((::Combine *) combined);
+  const shj::Combine *c = ((shj::Combine *) combined);
 
   c->mbit->messageBus.listen(c->id, c->value, c->logger, c->logger_fn);
   c->mbit->messageBus.listen(MICROBIT_ID_BUTTON_A, MICROBIT_BUTTON_EVT_CLICK, c->logger, c->button_fn);
+
+  // Return
+  return;
 }
 
 }
