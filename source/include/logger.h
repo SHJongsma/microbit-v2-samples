@@ -127,7 +127,7 @@ void create_consumer(void *combined) {
   const shj::Combine *c = ((shj::Combine *) combined);
 
   c->mbit->messageBus.listen(c->id, c->value, c->logger, c->logger_fn);
-  c->mbit->messageBus.listen(MICROBIT_ID_BUTTON_A, MICROBIT_BUTTON_EVT_CLICK, c->logger, c->button_fn);
+  c->mbit->messageBus.listen(MICROBIT_ID_BUTTON_A, MICROBIT_BUTTON_EVT_LONG_CLICK, c->logger, c->button_fn);
 
   // Return
   return;
