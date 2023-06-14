@@ -1,0 +1,10 @@
+
+
+Vind de juiste tty:
+$ sudo dmesg | grep tty
+
+Maak verbinding met screen:
+$ screen /dev/ttyACM0 115200,cs8
+
+Ga uit screen
+Ctrl-a d
