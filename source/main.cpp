@@ -1,6 +1,11 @@
 #include "MicroBit.h"
 //#include "samples/Tests.h"
 
+
+#include "MicroBitSerial.h"
+//#include "NRF52Serial.h"
+#include "MicroBitIO.h"
+
 #include "include/logger.h"
 
 namespace {
@@ -203,10 +208,11 @@ void printMemoryAndStop() {
     }
 }
 
-/*
+
 int main() {
   uBit.init();
   uBit.display.print("Start"); // will pause here a little while while showing Start
+
 
   // Create a logger object
   logger = new shj::Logger(&uBit);
@@ -215,14 +221,33 @@ int main() {
 
   logger->debug("main ~ Program started.");
 
+
+/*
+  NRF52Pin P0(ID_PIN_P0, P0_02, PIN_CAPABILITY_AD);
+
+  logger->debug("main ~ P0 created.");
+
+  NRF52Pin P1(ID_PIN_P1, P0_03, PIN_CAPABILITY_AD);
+
+  logger->debug("main ~ P1 created.");
+*/
+  uBit.sleep(250);
+
+  // Werkt nog niet, misschien gebruik maken van MicroBitIO object en daar de pinnummers vandaan halen
+  //NRF52Serial serial(uBit.io.P0, uBit.io.P1); // Gaat nog steeds mis
+
+
+  //logger->debug("main ~ Serial created");
+
   ::temperature_test();
 
   //printMemoryAndStop();
 
   release_fiber(); // finished with setup, release the fibers!!
 }
-*/
 
+
+/*
 
 #if CONFIG_ENABLED(DEVICE_BLE)
 
@@ -325,6 +350,6 @@ int main() {
 
 #endif
 
-
+*/
 
 
