@@ -8,3 +8,5 @@ $ screen /dev/ttyACM0 115200,cs8
 
 Ga uit screen
 Ctrl-a d
+
+https://www.hackster.io/alankrantas/wifi-web-server-on-bbc-micro-bit-and-esp-01-esp8266-498e0d
