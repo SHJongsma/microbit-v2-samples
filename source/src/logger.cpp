@@ -199,13 +199,19 @@ void Logger::process() {
   ++indx;
   m_buffer[indx] = '\0'; // terminate buffer
 
+  // Redirect the serial to USB
+  m_mbit->serial.redirect(m_mbit->io.usbTx, m_mbit->io.usbRx);
+
   // Here we need to send the buffer via the serial connection
-  int rtn = m_mbit->serial.send((uint8_t *)m_buffer, indx);
+  int rtn = m_mbit->serial.send((uint8_t *)m_buffer, indx, SYNC_SPINWAIT);
   while (rtn == MICROBIT_SERIAL_IN_USE) {
       // try again later, wait for TX buffer empty
       fiber_wait_for_event(MICROBIT_ID_NOTIFY, MICROBIT_SERIAL_EVT_TX_EMPTY);
-      rtn = m_mbit->serial.send((uint8_t *)m_buffer, indx);
+      rtn = m_mbit->serial.send((uint8_t *)m_buffer, indx, SYNC_SPINWAIT);
   }
+
+  // Redirect the serial back
+  m_mbit->serial.redirect(m_mbit->io.P0, m_mbit->io.P1);
 
   // Return
   return;

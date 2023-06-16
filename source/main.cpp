@@ -6,18 +6,20 @@
 #include "NRF52Serial.h"
 #include "MicroBitIO.h"
 
+
 #include "include/logger.h"
 
 namespace {
 
 MicroBit uBit;
 
-shj::Logger *logger;
+shj::Logger *logger = nullptr;
 
 int button_b_pressed = false;
 
 void onButtonB(MicroBitEvent) {
-  logger->info("Button B pressed.");
+  if (logger)
+    logger->info("Button B pressed.");
   button_b_pressed = true;
 }
 
@@ -43,7 +45,8 @@ void temperature_test() {
     // Display temperature
     while(1) {
 
-      logger->debug("temperatur_test ~ showing temperature on display.");
+      if (logger)
+        logger->debug("temperatur_test ~ showing temperature on display.");
 
       int T = uBit.thermometer.getTemperature();
 
@@ -114,6 +117,7 @@ int main() {
   uBit.init();
   uBit.display.print("Start"); // will pause here a little while while showing Start
 
+  uBit.serial.redirect(uBit.io.P0, uBit.io.P1); // <-- Lijkt te werken, maar dan is de logger niet te gebruiken
 
   // Create a logger object
   logger = new shj::Logger(&uBit);
@@ -135,12 +139,18 @@ int main() {
   uBit.sleep(250);
 
   // Werkt nog niet, misschien gebruik maken van MicroBitIO object en daar de pinnummers vandaan halen
-  //NRF52Serial serial(uBit.io.P0, uBit.io.P1); // Gaat nog steeds mis
 
 
-  //logger->debug("main ~ Serial created");
+
+
+  //NRF52Serial serial(uBit.io.P0, uBit.io.P1, NRF_UARTE1);
+
 
   ::temperature_test();
+
+  uBit.sleep(250);
+
+  //logger->debug("main ~ Serial created");
 
   //printMemoryAndStop();
 
