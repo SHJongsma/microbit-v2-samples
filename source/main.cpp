@@ -6,6 +6,7 @@
 #include "NRF52Serial.h"
 #include "MicroBitIO.h"
 
+#include "SPI.h"
 
 #include "include/logger.h"
 
@@ -141,7 +142,7 @@ int main() {
   // Werkt nog niet, misschien gebruik maken van MicroBitIO object en daar de pinnummers vandaan halen
 
 
-
+  codal::SPI spi(uBit.io.P15, uBit.io.P14,uBit.io.P13);
 
   //NRF52Serial serial(uBit.io.P0, uBit.io.P1, NRF_UARTE1);
 
