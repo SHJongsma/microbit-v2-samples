@@ -1,6 +1,7 @@
 #include "MicroBit.h"
 //#include "samples/Tests.h"
 
+#include <memory>
 
 //#include "MicroBitSerial.h"
 #include "NRF52Serial.h"
@@ -14,7 +15,7 @@ namespace {
 
 MicroBit uBit;
 
-shj::Logger *logger = nullptr;
+std::shared_ptr<shj::Logger> logger = nullptr;
 
 int button_b_pressed = false;
 
@@ -121,7 +122,7 @@ int main() {
   uBit.serial.redirect(uBit.io.P0, uBit.io.P1); // <-- Lijkt te werken, maar dan is de logger niet te gebruiken
 
   // Create a logger object
-  logger = new shj::Logger(&uBit);
+  logger = std::make_shared<shj::Logger>(&uBit);
 
   //uBit.messageBus.listen(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, onButtonB);
 
