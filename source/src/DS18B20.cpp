@@ -21,7 +21,6 @@ DS18B20::DS18B20(codal::Pin &pin) :
 
 double DS18B20::get_temperature() {
 
-  double temp;
 
   // Check if the last time the temperature was read is recent
   size_t now = codal::system_timer_current_time();
@@ -35,135 +34,139 @@ double DS18B20::get_temperature() {
 
   // NOTE: Even nadenken hoe het bij een overflow van de klok gaat (iedere 1.6 maand)
 
+
+  start();
+  sleep_us(100);
+  reset();
+  check();
+  sleep_us(2);
+  write_byte(0xCC);
+  write_byte(0xBE);
+
+  unsigned int TL = read_byte();
+  //uBit.serial.printf("TL=%d\r\n",TL);
+  sleep_us(100);
+  unsigned int TH = read_byte();
+  //uBit.serial.printf("TH=%d\r\n",TH);
+
+  unsigned int temp = TH;
+  temp = (temp << 8) + TL;
+
+  double result;
+  // Wat gebeurt hier? Negatieve temperatuur ogenschijnlijk
+  if ((temp & 0xf800) == 0xf800) {
+		temp = (~temp) + 1;
+		result = temp * (-0.0625);
+	}else{
+		result = temp * 0.0625; // Resolutie nog instellen
+	}
+
   // NOTE II: Don't forget to update the cache values:
   //uint32_t m_last_read;                 // Time of last read in ms
   //double m_last_temperature;            // Last temperature recorded
 
 
-
-  // Return the result
-  return temp;
+  return result;
 }
 
-/*
-void DS18B20Rest(void){
-  pin->setDigitalValue(0);
-  sleep_us(750);
-  pin->setDigitalValue(1);
-  sleep_us(15);
+
+
+void DS18B20::reset() const {
+  m_pin->setDigitalValue(0); // Set pin to 0
+  sleep_us(750);             // Wait for a while
+  m_pin->setDigitalValue(1); // Set pin to 1
+  sleep_us(15);              // Wait a short while
 }
 
-void DS18B20WiteByte(uint8_t data){
-  int _data=0,i;
-  for(i=0;i<8;i++){
-    _data=data&0x01;
-    data>>=1;
-    if(_data){
-      pin->setDigitalValue(0);
+void DS18B20::start() const {
+  reset();
+  check();
+  sleep_us(2);
+  write_byte(0xCC);
+  write_byte(0x44);
+}
+
+void DS18B20::write_byte(uint8_t data) const {
+  int _data = 0;
+  for(int i = 0; i < 8; ++i) {
+    _data = data & 0x01;
+    data >>= 1;
+    if (_data) {
+      m_pin->setDigitalValue(0);
       sleep_us(2);
-      pin->setDigitalValue(1);
+      m_pin->setDigitalValue(1);
       sleep_us(60);
-    }else{
-      pin->setDigitalValue(0);
+    } else {
+      m_pin->setDigitalValue(0);
       sleep_us(60);
-      pin->setDigitalValue(1);
+      m_pin->setDigitalValue(1);
       sleep_us(2);
     }
     //sleep_us(2);
   }
 }
 
-int DS18B20ReadBit(void){
-  int data;
-  pin->setDigitalValue(0);
+int DS18B20::check() const {
+
+  int state = 0;
+  while (m_pin->getDigitalValue()) {
+    ++state;
+    sleep_us(1);
+    if (state >= 200){
+      break;
+    }
+  }
+
+  if(state >= 200)
+    return 1;
+  else
+    state = 0;
+
+  while(!m_pin->getDigitalValue()){
+    ++state;
+    sleep_us(1);
+    if (state >= 240){
+      break;
+    }
+  }
+
+  if(state >= 240)
+    return 1;
+
+  return 0;
+}
+
+uint8_t DS18B20::read_bit() const {
+  uint8_t data;
+  m_pin->setDigitalValue(0);
   sleep_us(2);
-  pin->setDigitalValue(1);
+  m_pin->setDigitalValue(1);
   sleep_us(5);
-  if(pin->getDigitalValue()){
-      data = 1;
-  }else data = 0;
-  sleep_us(60);
+  if (m_pin->getDigitalValue()) {
+    data = 1;
+  } else {
+    data = 0;
+  }
+  sleep_us(60); // Waarom hier nog slapen?
+
+  // Return the result
   return data;
 }
 
-int DS18B20ReadByte(void){
-  int i,j,data=0;
-  for(i=0;i<8;i++){
-    j = DS18B20ReadBit();
+uint8_t DS18B20::read_byte() const {
+  uint8_t data = 0;
+  for (int i = 0; i < 8; ++i){
+    uint8_t j = read_bit();
     //uBit.serial.printf("%d",j);
-    sleep_us(2);
-    data = (j<<7)|(data>>1);
+    sleep_us(2); // Waarom hier nog slapen?
+    data = (j << 7) | (data >> 1);
   }
    sleep_us(2);
   //uBit.serial.printf("\r\n");
   return data;
 }
 
-int DS18B20Check(void){
-    int state=0;
-    while (pin->getDigitalValue())
-    {
-      state++;
-      sleep_us(1);
-      if(state>=200){
-        break;
-      }
-    }
-    if(state>=200)return 1;
-    else state = 0;
-    while(!pin->getDigitalValue()){
-      state++;
-      sleep_us(1);
-      if(state>=240){
-        break;
-      }
-    }
-    if(state>=240)return 1;
-    return 0;
-}
 
-void DS18B20Start(void){
-  DS18B20Rest();
-  DS18B20Check();
-  sleep_us(2);
-  DS18B20WiteByte(0xcc);
-  DS18B20WiteByte(0x44);
-}
-
-float DS18B20GetTemperture(void){
-  int temp;
-  int TH,TL;
-  float value;
-  DS18B20Start();
-  sleep_us(100);
-  DS18B20Rest();
-  DS18B20Check();
-  sleep_us(2);
-  DS18B20WiteByte(0xCC);
-  DS18B20WiteByte(0xBE);
-
-  TL = DS18B20ReadByte();
-  //uBit.serial.printf("TL=%d\r\n",TL);
-  sleep_us(100);
-  TH = DS18B20ReadByte();
-  //uBit.serial.printf("TH=%d\r\n",TH);
-  temp=TH;
-  temp=(temp<<8)+TL;
-
-  if((temp&0xf800)==0xf800){
-		temp=(~temp)+1;
-		value=temp*(-0.0625);
-	}else{
-		value=temp*0.0625;
-	}
-  return value;
-}
-
-
-
-
-
-*/
 
 } // Closing brace for namespace
 

@@ -32,13 +32,13 @@ class DS18B20 {
 
 private:
   // Private member functions
-  void reset();
-  void write_byte(uint8_t byte);
-  unsigned int read_bit();
-  uint8_t read_byte();
+  void reset() const;
+  void write_byte(uint8_t byte) const;
+  uint8_t read_bit() const ;
+  uint8_t read_byte() const;
 
-  int check(); // Check what?
-  void start();
+  int check() const; // Check what?
+  void start() const;
 
 
 
@@ -58,7 +58,7 @@ private:
 
 
 /*
-  //%
+  //% OBSOLETE ?
 int Temperature(int p) {
 
     switch(p){
