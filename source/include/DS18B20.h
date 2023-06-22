@@ -17,6 +17,10 @@
 
 // MicroBitPin *pin = &uBit.io.P13;
 
+#include <memory>
+
+#include "logger.h"
+
 #include "codal-core/inc/driver-models/Pin.h"
 
 namespace shj {
@@ -24,10 +28,10 @@ namespace shj {
 class DS18B20 {
 
   // Constructor
-  DS18B20(codal::Pin &pin);
+  DS18B20(codal::Pin &pin, const std::shared_ptr<Logger> &logger);
 
 
-  double get_temperature();
+  double get_temperature() const;
 
 
 private:
@@ -44,11 +48,12 @@ private:
 
   // Private member variables
   codal::Pin *m_pin = nullptr;
+  std::shared_ptr<Logger> m_logger;
 
   // Variables for caching the temperature
   const uint32_t m_refresh_rate = 1000; // ms
-  uint32_t m_last_read;                 // Time of last read in ms
-  double m_last_temperature;            // Last temperature recorded
+  mutable uint32_t m_last_read;                 // Time of last read in ms
+  mutable double m_last_temperature;            // Last temperature recorded
 
 
 }; // Closing brace for class definition

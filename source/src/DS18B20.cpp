@@ -11,30 +11,31 @@ namespace shj {
 // NOTE: Also use the logger !!!
 
 // Implemenation of the constructor
-DS18B20::DS18B20(codal::Pin &pin) :
-  m_pin(&pin) {
+DS18B20::DS18B20(codal::Pin &pin, const std::shared_ptr<Logger> &logger) :
+  m_pin(&pin),
+  m_logger(logger) {
 
   // Nothing to be done (yet)
 
 }
 
 
-double DS18B20::get_temperature() {
-
+double DS18B20::get_temperature() const {
 
   // Check if the last time the temperature was read is recent
   size_t now = codal::system_timer_current_time();
   if (now - m_last_read < m_refresh_rate) {
+    m_logger->debug("DS18B20::get_temperature ~ Returning cached temperature.");
     // Return the cached temperature
     return m_last_temperature;
   }
 
-  // We need to obtain a new temperature from the sensor
-  // TO BE IMPLEMENTED
 
   // NOTE: Even nadenken hoe het bij een overflow van de klok gaat (iedere 1.6 maand)
 
+  m_logger->debug("DS18B20::get_temperature ~ Obtaining new temperature from sensor.");
 
+  // We need to obtain a new temperature from the sensor
   start();
   sleep_us(100);
   reset();
@@ -61,11 +62,15 @@ double DS18B20::get_temperature() {
 		result = temp * 0.0625; // Resolutie nog instellen
 	}
 
-  // NOTE II: Don't forget to update the cache values:
-  //uint32_t m_last_read;                 // Time of last read in ms
-  //double m_last_temperature;            // Last temperature recorded
+  // Don't forget to update the cache values:
 
+  // Update the time of the last read
+  m_last_read = codal::system_timer_current_time();
 
+  // Update the value of the last read
+  m_last_read = result;
+
+  // Return the result
   return result;
 }
 
