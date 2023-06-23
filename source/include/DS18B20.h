@@ -20,6 +20,7 @@
 #include <memory>
 
 #include "logger.h"
+#include "one_wire.h"
 
 #include "codal-core/inc/driver-models/Pin.h"
 
@@ -29,7 +30,7 @@ class DS18B20 {
 
 public:
   // Constructor
-  DS18B20(codal::Pin &pin, const std::shared_ptr<Logger> &logger);
+  DS18B20(const OneWire &one_wire, const std::shared_ptr<Logger> &logger);
 
 
   double get_temperature() const;
@@ -37,18 +38,12 @@ public:
 
 private:
   // Private member functions
-  void reset() const;
-  void write_byte(uint8_t byte) const;
-  uint8_t read_bit() const ;
-  uint8_t read_byte() const;
 
   int check() const; // Check what?
   void start() const;
 
-
-
   // Private member variables
-  codal::Pin *m_pin = nullptr;
+  const OneWire &m_one_wire;
   std::shared_ptr<Logger> m_logger;
 
   // Variables for caching the temperature
@@ -56,6 +51,9 @@ private:
   mutable uint32_t m_last_read;                 // Time of last read in ms
   mutable double m_last_temperature;            // Last temperature recorded
 
+  static const unsigned char CONVERT       = 0x44;
+  static const unsigned char READ_SCRATCH  = 0xBE;
+  static const unsigned char WRITE_SCRATCH = 0x4E;
 
 }; // Closing brace for class definition
 

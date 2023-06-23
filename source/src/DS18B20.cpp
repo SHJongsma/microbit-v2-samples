@@ -8,11 +8,10 @@
 namespace shj {
 
 
-// NOTE: Also use the logger !!!
 
 // Implemenation of the constructor
-DS18B20::DS18B20(codal::Pin &pin, const std::shared_ptr<Logger> &logger) :
-  m_pin(&pin),
+DS18B20::DS18B20(const OneWire &one_wire, const std::shared_ptr<Logger> &logger) :
+  m_one_wire(one_wire),
   m_logger(logger) {
 
   // Nothing to be done (yet)
@@ -40,16 +39,21 @@ double DS18B20::get_temperature() const {
   // We need to obtain a new temperature from the sensor
   start();
   sleep_us(100);
-  reset();
-  check();
+  m_one_wire.reset();
+  m_one_wire.check();
   sleep_us(2);
-  write_byte(0xCC);
-  write_byte(0xBE);
 
-  unsigned int TL = read_byte();
+  // Send ROM command over one wire
+  m_one_wire.write_byte(OneWire::SKIP_ROM);
+
+  // Send function command over one wire
+  m_one_wire.write_byte(READ_SCRATCH);
+
+  // Read the information
+  unsigned int TL = m_one_wire.read_byte();
   //uBit.serial.printf("TL=%d\r\n",TL);
   sleep_us(100);
-  unsigned int TH = read_byte();
+  unsigned int TH = m_one_wire.read_byte();
   //uBit.serial.printf("TH=%d\r\n",TH);
 
   unsigned int temp = TH;
@@ -78,99 +82,16 @@ double DS18B20::get_temperature() const {
 
 
 
-void DS18B20::reset() const {
-  m_pin->setDigitalValue(0); // Set pin to 0
-  sleep_us(750);             // Wait for a while
-  m_pin->setDigitalValue(1); // Set pin to 1
-  sleep_us(15);              // Wait a short while
-}
-
 void DS18B20::start() const {
-  reset();
-  check();
+  m_one_wire.reset();
+  m_one_wire.check();
   sleep_us(2);
-  write_byte(0xCC);
-  write_byte(0x44);
-}
 
-void DS18B20::write_byte(uint8_t data) const {
-  int _data = 0;
-  for(int i = 0; i < 8; ++i) {
-    _data = data & 0x01;
-    data >>= 1;
-    if (_data) {
-      m_pin->setDigitalValue(0);
-      sleep_us(2);
-      m_pin->setDigitalValue(1);
-      sleep_us(60);
-    } else {
-      m_pin->setDigitalValue(0);
-      sleep_us(60);
-      m_pin->setDigitalValue(1);
-      sleep_us(2);
-    }
-    //sleep_us(2);
-  }
-}
+  // Send ROM command
+  m_one_wire.write_byte(OneWire::SKIP_ROM);
 
-int DS18B20::check() const {
-
-  int state = 0;
-  while (m_pin->getDigitalValue()) {
-    ++state;
-    sleep_us(1);
-    if (state >= 200){
-      break;
-    }
-  }
-
-  if(state >= 200)
-    return 1;
-  else
-    state = 0;
-
-  while(!m_pin->getDigitalValue()){
-    ++state;
-    sleep_us(1);
-    if (state >= 240){
-      break;
-    }
-  }
-
-  if(state >= 240)
-    return 1;
-
-  return 0;
-}
-
-uint8_t DS18B20::read_bit() const {
-  uint8_t data;
-  m_pin->setDigitalValue(0);
-  sleep_us(2);
-  m_pin->setDigitalValue(1);
-  sleep_us(5);
-  if (m_pin->getDigitalValue()) {
-    data = 1;
-  } else {
-    data = 0;
-  }
-  sleep_us(60); // Waarom hier nog slapen?
-
-  // Return the result
-  return data;
-}
-
-uint8_t DS18B20::read_byte() const {
-  uint8_t data = 0;
-  for (int i = 0; i < 8; ++i){
-    uint8_t j = read_bit();
-    //uBit.serial.printf("%d",j);
-    sleep_us(2); // Waarom hier nog slapen?
-    data = (j << 7) | (data >> 1);
-  }
-   sleep_us(2);
-  //uBit.serial.printf("\r\n");
-  return data;
+  // Send function command
+  m_one_wire.write_byte(CONVERT);
 }
 
 
