@@ -10,6 +10,8 @@
 #include "SPI.h"
 
 #include "include/logger.h"
+#include "include/one_wire.h"
+#include "include/DS18B20.h"
 
 namespace {
 
@@ -127,6 +129,15 @@ int main() {
   //uBit.messageBus.listen(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, onButtonB);
 
   logger->debug("main ~ Program started.");
+
+  // Create a one wire interface
+  shj::OneWire one_wire(uBit.io.P13, logger);
+
+  // Create a temperature sensor
+  shj::DS18B20 sensor(one_wire, logger);
+
+  // Test
+  sensor.get_temperature();
 
 
 /*
