@@ -27,6 +27,7 @@ namespace shj {
 
 class DS18B20 {
 
+public:
   // Constructor
   DS18B20(codal::Pin &pin, const std::shared_ptr<Logger> &logger);
 

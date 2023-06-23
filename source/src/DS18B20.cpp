@@ -24,14 +24,16 @@ double DS18B20::get_temperature() const {
 
   // Check if the last time the temperature was read is recent
   size_t now = codal::system_timer_current_time();
+
+  // Prevent problems with overflow (every 1.6 months)
+  if (now < m_last_read)
+    m_last_read = 0; // Reset m_last_read to zero
+
   if (now - m_last_read < m_refresh_rate) {
     m_logger->debug("DS18B20::get_temperature ~ Returning cached temperature.");
     // Return the cached temperature
     return m_last_temperature;
   }
-
-
-  // NOTE: Even nadenken hoe het bij een overflow van de klok gaat (iedere 1.6 maand)
 
   m_logger->debug("DS18B20::get_temperature ~ Obtaining new temperature from sensor.");
 
