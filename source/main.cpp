@@ -19,6 +19,8 @@ MicroBit uBit;
 
 std::shared_ptr<shj::Logger> logger = nullptr;
 
+std::shared_ptr<shj::DS18B20> sensor; // NOTE: Unique_ptr does not seem to compile
+
 int button_b_pressed = false;
 
 void onButtonB(MicroBitEvent) {
@@ -52,20 +54,39 @@ void temperature_test() {
       if (logger)
         logger->debug("temperatur_test ~ showing temperature on display.");
 
-      int T = uBit.thermometer.getTemperature();
+      //int T = uBit.thermometer.getTemperature();
+      double T = sensor->get_temperature();
 
-      temp[0] = (char) (((T/4) / 10) + 48);
-      temp[1] = (char) (((T/4) % 10) + 48);
+      temp[0] = (char) ((((int) T) / 10) + 48);
+      temp[1] = (char) ((((int) T) % 10) + 48);
       temp[2] = '.';
-      switch (T % 4) {
-        case 3:
+      switch (((int) (10 * T)) % 10) {
+        case 9:
+          temp[3] = '9';
+          break;
+        case 8:
           temp[3] = '8';
           break;
-        case 2:
+        case 7:
+          temp[3] = '7';
+          break;
+        case 6:
+          temp[3] = '6';
+          break;
+        case 5:
           temp[3] = '5';
           break;
-        case 1:
+        case 4:
+          temp[3] = '4';
+          break;
+        case 3:
           temp[3] = '3';
+          break;
+        case 2:
+          temp[3] = '2';
+          break;
+        case 1:
+          temp[3] = '1';
           break;
         case 0:
         default:
@@ -85,6 +106,27 @@ void temperature_test() {
   // Return
   return;
 }
+
+
+void initialize() {
+
+
+  // TO BE IMPLEMENTED: Move stuff from the first part of main here
+
+
+}
+
+double get_temperature() {
+
+  if (!sensor && logger) {
+    logger->error("::get_temperature ~ Failed to get temperature, sensor = nullptr.");
+    return -999;
+  }
+
+
+  return 0;
+}
+
 
 } // Namespace
 
@@ -118,27 +160,30 @@ void printMemoryAndStop() {
 
 
 int main() {
-  uBit.init();
-  uBit.display.print("Start"); // will pause here a little while while showing Start
+  ::uBit.init();
+  ::uBit.display.print("Start"); // will pause here a little while while showing Start
 
-  uBit.serial.redirect(uBit.io.P0, uBit.io.P1); // <-- Lijkt te werken, maar dan is de logger niet te gebruiken
+  ::uBit.serial.redirect(uBit.io.P0, uBit.io.P1); // <-- Lijkt te werken, maar dan is de logger niet te gebruiken
 
   // Create a logger object
-  logger = std::make_shared<shj::Logger>(&uBit);
+  ::logger = std::make_shared<shj::Logger>(&uBit);
 
   //uBit.messageBus.listen(MICROBIT_ID_BUTTON_B, MICROBIT_BUTTON_EVT_CLICK, onButtonB);
 
-  logger->debug("main ~ Program started.");
+  ::logger->debug("main ~ Program started.");
 
   // Create a one wire interface
-  shj::OneWire one_wire(uBit.io.P13, logger);
+  shj::OneWire one_wire(::uBit.io.P2, ::logger);
 
   // Create a temperature sensor
-  shj::DS18B20 sensor(one_wire, logger);
+  sensor = std::make_shared<shj::DS18B20>(one_wire, ::logger);
 
   // Test
-  sensor.get_temperature();
+  double temp = sensor->get_temperature();
 
+  ManagedString tstr((int) temp);
+
+  uBit.display.scroll(tstr);
 
 /*
   NRF52Pin P0(ID_PIN_P0, P0_02, PIN_CAPABILITY_AD);
