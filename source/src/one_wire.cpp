@@ -105,7 +105,32 @@ int OneWire::check() const {
   return 0;
 }
 
+// Function to compute the cyclic redundancy check
+// From: https://github.com/paeaetech/paeae/blob/master/Libraries/ds2482/DS2482.cpp
+uint8_t OneWire::compute_crc(const uint8_t *buffer, const uint8_t len) {
 
+  uint8_t crc = 0;
+
+  // Loop over the bytes of data
+	for (uint8_t i = 0; i < len; ++i) {
+
+		uint8_t inbyte = buffer[i];
+
+    // Loop over the bits of the byte
+		for (uint8_t j = 0; j < 8;++j) {
+
+			uint8_t mix = (crc ^ inbyte) & 0x01;
+			crc >>= 1;
+			if (mix)
+				crc ^= 0x8C;
+
+			inbyte >>= 1;
+		}
+	}
+
+  // Return the result
+	return crc;
+}
 
 
 

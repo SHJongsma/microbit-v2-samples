@@ -24,6 +24,9 @@ public:
   uint8_t read_bit() const ;
   uint8_t read_byte() const;
 
+  static uint8_t compute_crc(const uint8_t *buffer, const uint8_t len);
+
+  static const unsigned char READ_ROM   = 0x33;
   static const unsigned char SEARCH_ROM = 0xF0;
   static const unsigned char MATCH_ROM  = 0x55;
   static const unsigned char SKIP_ROM   = 0xCC;

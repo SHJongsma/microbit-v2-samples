@@ -120,20 +120,43 @@ double DS18B20::get_temperature() const {
   // Send function command over one wire
   m_one_wire.write_byte(READ_SCRATCH);
 
-  // Read the information
+/*
+  // Read the least signficant bit
   unsigned int TL = m_one_wire.read_byte();
   //uBit.serial.printf("TL=%d\r\n",TL);
 
+  sleep_us(100); // Wait a while
+
+  // Read the most significant byte
+  unsigned int TH = m_one_wire.read_byte();
+*/
+
+  // Read all bytes
+  unsigned char byte_buffer[9];
+  for (size_t i = 0; i < 9; ++i) {
+    byte_buffer[i]  = m_one_wire.read_byte();
+    sleep_us(100); // Wait a while
+  }
+
   char buffer[50];
-  int nchar = sprintf(buffer, "TL = %d.", TL);
+  unsigned int TL = byte_buffer[0];
+  int nchar = sprintf(buffer, "TL = %d.", (int) byte_buffer[0]);
   m_logger->debug("DS18B20::get_temperature ~ Read byte: " + std::string(buffer));
 
-  sleep_us(100);
-  unsigned int TH = m_one_wire.read_byte();
-
-  nchar = sprintf(buffer, "TH = %d.", TH);
+  unsigned int TH = byte_buffer[1];
+  nchar = sprintf(buffer, "TH = %d.", (int) byte_buffer[1]);
   m_logger->debug("DS18B20::get_temperature ~ Read byte: " + std::string(buffer));
   //uBit.serial.printf("TH=%d\r\n",TH);
+
+  // Also get the CRC, which is byte 9 on index 8
+  unsigned char CRC = byte_buffer[8];
+  nchar = sprintf(buffer, "CRC = %d.", (int) CRC);
+  m_logger->debug("DS18B20::get_temperature ~ Read byte: " + std::string(buffer));
+
+  // Also compute the CRC, based on the data in the buffer
+  uint8_t crc = OneWire::compute_crc(byte_buffer, 8);
+  nchar = sprintf(buffer, "crc = %d.", (int) crc);
+  m_logger->debug("DS18B20::get_temperature ~ Read byte: " + std::string(buffer));
 
   unsigned int temp = TH;
   temp = (temp << 8) + TL;
