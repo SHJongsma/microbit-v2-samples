@@ -27,10 +27,16 @@ std::string double_to_string(const double &x) {
 
   double val(x);
 
+  std::string result;
+  if (val < 0) {
+    result += '-';
+    val *= -1;
+  }
+
   // Determine the number of digits
   int digits = 1;
-  if (x >= 1)
-    digits = static_cast<int>(std::log10(x)) + 1;
+  if (val >= 1)
+    digits = static_cast<int>(std::log10(val)) + 1;
 
   // Compute the base
   double base = 1;
@@ -41,7 +47,6 @@ std::string double_to_string(const double &x) {
   }
 
   // Compose the string
-  std::string result;
   while (base >= 1) {
     int D = val / base;
     result += static_cast<char>(D + 48);
