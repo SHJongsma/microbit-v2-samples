@@ -158,6 +158,10 @@ double DS18B20::get_temperature() const {
   nchar = sprintf(buffer, "crc = %d.", (int) crc);
   m_logger->debug("DS18B20::get_temperature ~ Read byte: " + std::string(buffer));
 
+  nchar = sprintf(buffer, "(%d, %d, %d, %d, %d, %d, %d, %d, %d).", (int) byte_buffer[0], (int) byte_buffer[1],
+    byte_buffer[2], byte_buffer[3], byte_buffer[4], byte_buffer[5], byte_buffer[6], byte_buffer[7], byte_buffer[8]);
+  m_logger->info("Got bytes: " + std::string(buffer));
+
   unsigned int temp = TH;
   temp = (temp << 8) + TL;
 
