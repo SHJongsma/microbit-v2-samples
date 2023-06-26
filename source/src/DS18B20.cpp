@@ -109,41 +109,60 @@ double DS18B20::get_temperature() const {
 
   // We need to obtain a new temperature from the sensor
   start();
-  sleep_us(100);
-  m_one_wire.reset();
-  m_one_wire.check();
-  sleep_us(2);
 
-  // Send ROM command over one wire
-  m_one_wire.write_byte(OneWire::SKIP_ROM);
+  //fiber_sleep(750);
+  sleep_us(100); // Conversion can take up to 750 MILLIseconds
+                 // NOTE, that this can be checked by listening for a one send by the sensor
 
-  // Send function command over one wire
-  m_one_wire.write_byte(READ_SCRATCH);
 
-/*
-  // Read the least signficant bit
-  unsigned int TL = m_one_wire.read_byte();
-  //uBit.serial.printf("TL=%d\r\n",TL);
 
-  sleep_us(100); // Wait a while
-
-  // Read the most significant byte
-  unsigned int TH = m_one_wire.read_byte();
-*/
-
-  // Read all bytes
   unsigned char byte_buffer[9];
-  for (size_t i = 0; i < 9; ++i) {
-    byte_buffer[i]  = m_one_wire.read_byte();
+  size_t count(0);
+    while (true) {
+    m_one_wire.reset();
+    m_one_wire.check(); // Checks for precence pulse
+    sleep_us(2);
+
+    // Send ROM command over one wire
+    m_one_wire.write_byte(OneWire::SKIP_ROM);
+
+    // Send function command over one wire
+    m_one_wire.write_byte(READ_SCRATCH);
+
+  /*
+    // Read the least signficant bit
+    unsigned int TL = m_one_wire.read_byte();
+    //uBit.serial.printf("TL=%d\r\n",TL);
+
     sleep_us(100); // Wait a while
+
+    // Read the most significant byte
+    unsigned int TH = m_one_wire.read_byte();
+  */
+
+    // Read all bytes
+    for (size_t i = 0; i < 9; ++i) {
+      byte_buffer[i]  = m_one_wire.read_byte();
+      sleep_us(100); // Wait a while <-- Check if this is long or short enough !!!
+    }
+
+    uint8_t crc = OneWire::compute_crc(byte_buffer, 8); // Compute CRC
+    if (byte_buffer[8] != crc)
+      ++count;
+    else
+      break;
   }
 
   char buffer[50];
-  unsigned int TL = byte_buffer[0];
-  int nchar = sprintf(buffer, "TL = %d.", (int) byte_buffer[0]);
+
+  int nchar = sprintf(buffer, "Number of tries = %d.", (int) count);
+  m_logger->debug("DS18B20::get_temperature ~ " + std::string(buffer));
+
+  unsigned char LSB = byte_buffer[0];
+  nchar = sprintf(buffer, "TL = %d.", (int) byte_buffer[0]);
   m_logger->debug("DS18B20::get_temperature ~ Read byte: " + std::string(buffer));
 
-  unsigned int TH = byte_buffer[1];
+  unsigned char MSB = byte_buffer[1];
   nchar = sprintf(buffer, "TH = %d.", (int) byte_buffer[1]);
   m_logger->debug("DS18B20::get_temperature ~ Read byte: " + std::string(buffer));
   //uBit.serial.printf("TH=%d\r\n",TH);
@@ -162,13 +181,13 @@ double DS18B20::get_temperature() const {
     byte_buffer[2], byte_buffer[3], byte_buffer[4], byte_buffer[5], byte_buffer[6], byte_buffer[7], byte_buffer[8]);
   m_logger->info("Got bytes: " + std::string(buffer));
 
-  unsigned int temp = TH;
-  temp = (temp << 8) + TL;
+  unsigned int temp = MSB & 0x07;
+  temp = (temp << 8) | LSB;
 
   double result;
-  // Wat gebeurt hier? Negatieve temperatuur ogenschijnlijk
-  if ((temp & 0xf800) == 0xf800) {
-		temp = (~temp) + 1;
+  // Check if temperature is negative
+  if ((MSB & 0xF8) == 0xF8) {
+		temp = (temp ^ 0xFFFF) + 1; // NOTE: Negative temperatures might not be computed correctly
 		result = temp * (-0.0625);
 	}else{
 		result = temp * 0.0625; // Resolutie nog instellen
