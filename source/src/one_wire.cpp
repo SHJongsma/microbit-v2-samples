@@ -105,6 +105,8 @@ int OneWire::check() const {
   return 0;
 }
 
+#ifndef USE_ALTERNATIVE_CRC
+
 // Function to compute the cyclic redundancy check
 // From: https://github.com/paeaetech/paeae/blob/master/Libraries/ds2482/DS2482.cpp
 uint8_t OneWire::compute_crc(const uint8_t *buffer, const uint8_t len) {
@@ -131,6 +133,40 @@ uint8_t OneWire::compute_crc(const uint8_t *buffer, const uint8_t len) {
   // Return the result
 	return crc;
 }
+
+#else
+
+// Alternative implementation from: https://github.com/adafruit/Adafruit_CircuitPython_OneWire/blob/b051ceab5f1839d002c12ef29b558ab0a3efe92d/adafruit_onewire/bus.py
+
+
+uint8_t OneWire::compute_crc(const uint8_t *buffer, const uint8_t len) {
+
+  uint8_t crc = 0;
+
+  // Loop over the bytes of data
+	for (uint8_t i = 0; i < len; ++i) {
+
+		uint8_t inbyte = buffer[i];
+
+    crc ^= inbyte;
+
+    // Loop over the bits of the byte
+		for (uint8_t j = 0; j < 8;++j) {
+
+      if (crc & 0x01)
+				crc = (crc >> 1) ^ 0x8C;
+      else
+        crc >>= 1;
+
+      crc &= 0xFF;
+		}
+	}
+
+  // Return the result
+	return crc;
+}
+
+#endif // USE_ALTERNATIVE_CRC
 
 
 
