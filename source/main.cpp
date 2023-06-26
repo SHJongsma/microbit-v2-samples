@@ -1,6 +1,28 @@
 #include "MicroBit.h"
 //#include "samples/Tests.h"
 
+/* TO DO
+
+x Beide CRC implementaties vergelijken qua uitkomst, i.e. beide toepassen en vergelijken <== Resultaat blijkt gelijk
+- Aan de hand van uitgelezen ROM CRC berekening checken
+- Voor TH alleen eerste 4 bit beschouwen + `sign-bit' in ogenschouw nemen
+- Bij foute CRC waarschuwing printen en temperatuur niet opslaan
+- Spelen met timings voor hopelijk een robuuster resultaat
+- ROM code/ID proberen uit te lezen
+- Proberen een CodalComponent van de temperatuursensor te maken en dan de idlecallback implementeren
+- UpdateSample functie toevoegen
+- create_fiber aan roepen met updatesample functie en dan `gewoon' oude waarde meteen teruggeven
+- Gekopieerde functies nalopen op basis van documentatie
+- ROM uitlezen
+
+- Bezig met communicatie met netwerkmodule
+
+
+
+
+
+*/
+
 #include <memory>
 
 //#include "MicroBitSerial.h"
@@ -95,6 +117,8 @@ void temperature_test() {
       }
 
       uBit.display.scroll({temp, 4});
+
+      fiber_sleep(2000);
 
       if (button_b_pressed) {
         button_b_pressed = false;
