@@ -155,14 +155,22 @@ void DS18B20::update_sample() const {
   // We need to obtain a new temperature from the sensor
   start();
 
-  //char buffer[50];
-  //int nchar = sprintf(buffer, "Conversion took = %d us.", tick);
-  //m_logger->debug("DS18B20::update_sample ~ " + std::string(buffer));
+  size_t tick = 0;
+  while (true) {
+    ++tick;
+
+    if (m_one_wire.read_bit())
+      break;
+  }
+
+  char buffer[50];
+  int nchar = sprintf(buffer, "Conversion took = %d ticks.", tick);
+  m_logger->debug("DS18B20::update_sample ~ " + std::string(buffer));
 
 
   //fiber_sleep(750); // NOTE: Zou eigenlijk (maximaal) 750 ms moeten zijn, maar
                       // 100 us lijkt eigenlijk net zo goed te werken
-  sleep_us(100); // Conversion can take up to 750 MILLIseconds
+  //sleep_us(100); // Conversion can take up to 750 MILLIseconds
                  // NOTE, that this can be checked by listening for a one send by the sensor
 
   unsigned char byte_buffer[9];
