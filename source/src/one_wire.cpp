@@ -105,6 +105,10 @@ int OneWire::check() const {
   return 0;
 }
 
+uint8_t OneWire::get_current_value() const {
+  return m_pin->getDigitalValue();
+}
+
 #ifndef USE_ALTERNATIVE_CRC
 
 // Function to compute the cyclic redundancy check
