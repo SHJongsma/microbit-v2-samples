@@ -17,7 +17,7 @@ void update_sample(void *vp_sensor) {
 
   const shj::DS18B20 *sensor = ((shj::DS18B20 *) vp_sensor);
 
- // sensor->update_sample(); // <== Function to be implemented
+  sensor->update_sample();
 
   // Return
   return;
@@ -67,7 +67,23 @@ std::string double_to_string(const double &x) {
   return result;
 }
 
+double compute_temperature(const unsigned char LSB, const unsigned char MSB) { // <== Maybe add parameter for resolution
 
+  unsigned int temp = MSB & 0x07;
+  temp = (temp << 8) | LSB;
+
+  double result;
+  // Check if temperature is negative
+  if ((MSB & 0xF8) == 0xF8) {
+		temp = (temp ^ 0xFFFF) + 1; // NOTE: Negative temperatures might not be computed correctly
+		result = temp * (-0.0625);
+	}else{
+		result = temp * 0.0625; // Resolutie nog instellen
+	}
+
+  // Return the result
+  return result;
+}
 
 } // Closing brace for anonymous namespace
 
@@ -106,11 +122,16 @@ double DS18B20::get_temperature() const {
   //create_fiber(::update_sample, (void *) this);
 
   // Update sample function from here
+  update_sample();
+
+  // Just return the most recent value (from cache)
+  return m_last_temperature;
 
   // We need to obtain a new temperature from the sensor
   start();
 
-  //fiber_sleep(750);
+  //fiber_sleep(750); // NOTE: Zou eigenlijk (maximaal) 750 ms moeten zijn, maar
+                      // 100 us lijkt eigenlijk net zo goed te werken
   sleep_us(100); // Conversion can take up to 750 MILLIseconds
                  // NOTE, that this can be checked by listening for a one send by the sensor
 
@@ -118,13 +139,15 @@ double DS18B20::get_temperature() const {
 
   unsigned char byte_buffer[9];
   size_t count(0);
-    while (true) {
+    while (true) { // NOTE: Bij maximum aantal loop afbreken, nu kans op infinite loop
     m_one_wire.reset();
     m_one_wire.check(); // Checks for precence pulse
     sleep_us(2);
 
     // Send ROM command over one wire
     m_one_wire.write_byte(OneWire::SKIP_ROM);
+
+    // Moet hier nog een pauze tussen?
 
     // Send function command over one wire
     m_one_wire.write_byte(READ_SCRATCH);
@@ -147,11 +170,14 @@ double DS18B20::get_temperature() const {
     }
 
     uint8_t crc = OneWire::compute_crc(byte_buffer, 8); // Compute CRC
-    if (byte_buffer[8] != crc)
-      ++count;
-    else
+    if (byte_buffer[8] == crc || count > 15)
       break;
+    else
+      ++count;
   }
+
+  if (count >= 15)
+    m_logger->warn("DS18B20::get_temperature ~ reached maximum number of 15 tries.");
 
   char buffer[50];
 
@@ -221,6 +247,64 @@ void DS18B20::start() const {
 }
 
 
+void DS18B20::update_sample() const {
+
+  const size_t max_tries = 15;
+
+  // We need to obtain a new temperature from the sensor
+  start();
+
+  //fiber_sleep(750); // NOTE: Zou eigenlijk (maximaal) 750 ms moeten zijn, maar
+                      // 100 us lijkt eigenlijk net zo goed te werken
+  sleep_us(100); // Conversion can take up to 750 MILLIseconds
+                 // NOTE, that this can be checked by listening for a one send by the sensor
+
+  unsigned char byte_buffer[9];
+  size_t count(0);
+  while (true) {
+    m_one_wire.reset();
+    m_one_wire.check(); // Checks for presence pulse
+    sleep_us(2);
+
+    // Send ROM command over one wire
+    m_one_wire.write_byte(OneWire::SKIP_ROM);
+
+    // Moet hier nog een pauze tussen?
+
+    // Send function command over one wire
+    m_one_wire.write_byte(READ_SCRATCH);
+
+    // Read all bytes
+    for (size_t i = 0; i < 9; ++i) {
+      byte_buffer[i]  = m_one_wire.read_byte();
+      sleep_us(100); // Wait a while <-- Check if this is long or short enough !!!
+    }
+
+    uint8_t crc = OneWire::compute_crc(byte_buffer, 8); // Compute CRC over the first eight bytes
+    if (byte_buffer[8] == crc || count > max_tries)
+      break;
+    else
+      ++count;
+  }
+
+  if (count >= 15)
+    m_logger->warn("DS18B20::update_sample ~ reached maximum number of 15 tries.");
+
+  // Get the least significant byte
+  const unsigned char LSB = byte_buffer[0];
+
+  // Get the most significant byte
+  const unsigned char MSB = byte_buffer[1];
+
+  // Store the temperature in cache
+  m_last_temperature = ::compute_temperature(LSB, MSB);
+
+  // Update the time of the last read
+  m_last_read = codal::system_timer_current_time();
+
+  // Return
+  return;
+}
 
 } // Closing brace for namespace
 

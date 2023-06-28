@@ -35,12 +35,15 @@ public:
 
   double get_temperature() const;
 
+  void update_sample() const;
 
 private:
   // Private member functions
 
   int check() const; // Check what?
   void start() const;
+
+
 
   // Private member variables
   const OneWire &m_one_wire;
