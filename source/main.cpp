@@ -4,18 +4,22 @@
 /* TO DO
 
 x Beide CRC implementaties vergelijken qua uitkomst, i.e. beide toepassen en vergelijken <== Resultaat blijkt gelijk
-- Aan de hand van uitgelezen ROM CRC berekening checken
-- Voor TH alleen eerste 4 bit beschouwen + `sign-bit' in ogenschouw nemen
-- Bij foute CRC waarschuwing printen en temperatuur niet opslaan
-- Spelen met timings voor hopelijk een robuuster resultaat
+x Voor TH alleen eerste 4 bit beschouwen + `sign-bit' in ogenschouw nemen
+x Bij foute CRC waarschuwing printen en temperatuur niet opslaan
+x UpdateSample functie toevoegen
+x create_fiber aan roepen met updatesample functie en dan `gewoon' oude waarde meteen teruggeven <== Lijkt niet te werken
+x Expliciet checken wanneer de conversie klaar is <== Lijkt alsof het instantaan is
+- Resultaat van presence pulse check daadwerkelijk gebruiken
 - ROM code/ID proberen uit te lezen
+- Aan de hand van uitgelezen ROM CRC berekening checken
+- Configuratie kunnen updaten
+- Spelen met timings voor hopelijk een robuuster resultaat/ Nagaan wat sommige timings `doen' op basis van documentatie
 - Proberen een CodalComponent van de temperatuursensor te maken en dan de idlecallback implementeren
-- UpdateSample functie toevoegen
-- create_fiber aan roepen met updatesample functie en dan `gewoon' oude waarde meteen teruggeven
 - Gekopieerde functies nalopen op basis van documentatie
 - ROM uitlezen
 
-- Bezig met communicatie met netwerkmodule
+- Bezig met communicatie met netwerkmodule:
+  - W5500 bibliotheek etc toevoegen
 
 
 
@@ -203,11 +207,11 @@ int main() {
   sensor = std::make_shared<shj::DS18B20>(one_wire, ::logger);
 
   // Test
-  double temp = sensor->get_temperature();
+  //double temp = sensor->get_temperature();
 
-  ManagedString tstr((int) temp);
+  //ManagedString tstr((int) temp);
 
-  uBit.display.scroll(tstr);
+  //uBit.display.scroll(tstr);
 
 /*
   NRF52Pin P0(ID_PIN_P0, P0_02, PIN_CAPABILITY_AD);
