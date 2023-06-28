@@ -24,8 +24,6 @@ public:
   uint8_t read_bit() const ;
   uint8_t read_byte() const;
 
-  uint8_t get_current_value() const ;
-
   static uint8_t compute_crc(const uint8_t *buffer, const uint8_t len);
 
   static const unsigned char READ_ROM   = 0x33;
