@@ -116,36 +116,6 @@ int OneWire::check() const {
     return 1;
   else
     return 0;
-
-/*
-  int state = 0;
-  while (m_pin->getDigitalValue()) {
-    ++state;
-    sleep_us(1);
-    if (state >= 200){
-      break;
-    }
-  }
-
-  if(state >= 200)
-    return 1;
-  else
-    state = 0;
-
-  while(!m_pin->getDigitalValue()){
-    ++state;
-    sleep_us(1);
-    if (state >= 240){
-      break;
-    }
-  }
-
-  if(state >= 240)
-    return 1;
-
-  return 0;
-
-*/
 }
 
 #ifndef USE_ALTERNATIVE_CRC
