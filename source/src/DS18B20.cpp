@@ -151,20 +151,30 @@ void DS18B20::start() const {
 void DS18B20::update_sample() const {
 
   const size_t max_tries = 15;
+  const size_t max_ticks = 12097;
 
   // We need to obtain a new temperature from the sensor
   start();
 
+  // Wait for the conversion to be done
+  // NOTE: One tick amounts to 62 us
+  // A conversion of a 12 bit temperature takes at most
+  // 750 ms, which equals 12097 ticks. If this number of
+  // ticks is exceeded, we break the loop
   size_t tick = 0;
   while (true) {
     ++tick;
 
-    if (m_one_wire.read_bit())
+    if (m_one_wire.read_bit() || (tick > max_ticks))
       break;
   }
 
+  if (tick >= max_ticks) {
+    m_logger->warn("DS18B20::update_sample ~ Maximum conversion time timed out.");
+  }
+
   char buffer[50];
-  int nchar = sprintf(buffer, "Conversion took = %d ticks.", tick);
+  int nchar = sprintf(buffer, "Conversion took = %d us.", tick * 62);
   m_logger->debug("DS18B20::update_sample ~ " + std::string(buffer));
 
 
@@ -177,7 +187,12 @@ void DS18B20::update_sample() const {
   size_t count(0);
   while (true) {
     m_one_wire.reset();
-    m_one_wire.check(); // Checks for presence pulse
+
+    if (!m_one_wire.check()) { // Checks for presence pulse
+      m_logger->info("DS18B20::update_sample ~ Presence pulse returned 0.");
+      continue;
+    }
+
     sleep_us(2);
 
     // Send ROM command over one wire
