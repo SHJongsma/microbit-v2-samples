@@ -48,7 +48,8 @@ uint8_t OneWire::read_bit() const {
   uint8_t data;
   m_pin->setDigitalValue(0);
   sleep_us(2);
-  m_pin->setDigitalValue(1);
+  m_pin->getDigitalValue(); // Use pull up resistor
+  //m_pin->setDigitalValue(1);
   sleep_us(5);
   if (m_pin->getDigitalValue()) {
     data = 1;
