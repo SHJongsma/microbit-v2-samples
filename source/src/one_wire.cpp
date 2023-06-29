@@ -56,7 +56,7 @@ uint8_t OneWire::read_bit() const {
   } else {
     data = 0;
   }
-  sleep_us(60); // Waarom hier nog slapen?
+  sleep_us(55); // Complete the read time slot of at least 60 us (and at most 120 us).
 
   // Return the result
   return data;
