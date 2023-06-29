@@ -18,10 +18,9 @@ OneWire::OneWire(codal::Pin &pin, const std::shared_ptr<Logger> &logger) :
 
 
 void OneWire::reset() const {
-  m_pin->setDigitalValue(0); // Set pin to 0
-  sleep_us(750);             // Wait for a while
-  m_pin->setDigitalValue(1); // Set pin to 1
-  sleep_us(15);              // Wait a short while
+  m_pin->setDigitalValue(0); // Have bus master pull low
+  sleep_us(500);             // Wait for a while (between 480 us and 960 us)
+  m_pin->getDigitalValue();  // Have the resistor pull up
 }
 
 void OneWire::write_byte(uint8_t data) const {
@@ -77,6 +76,48 @@ uint8_t OneWire::read_byte() const {
 
 int OneWire::check() const {
 
+  int rx_time = 500;
+
+  // Wait for the sensor to pull low
+  int state = 0;
+  while (m_pin->getDigitalValue()) {
+    ++state;
+    sleep_us(1);
+    if (state >= 60){
+      break;
+    }
+  }
+
+  // Subtract the duration of the high bit
+  rx_time -= state;
+
+  // Sensor is sending presence pulse, i.e. low bit => time it
+  state = 0;
+  while (!m_pin->getDigitalValue()) {
+    ++state;
+    sleep_us(1);
+    if (state >= 60){
+      break;
+    }
+  }
+
+  // Update rx_time
+  rx_time -= state;
+
+  // Complete the receive window
+  sleep_us(rx_time);
+
+  // NOTE: Documentation states that presence pulse should be between 15 us and 60 us.
+  // In my timings the median is 13 us. So the choice is made to have anything above
+  // 11 qualify.
+
+  // Return the result
+  if (state > 11)
+    return 1;
+  else
+    return 0;
+
+/*
   int state = 0;
   while (m_pin->getDigitalValue()) {
     ++state;
@@ -103,6 +144,8 @@ int OneWire::check() const {
     return 1;
 
   return 0;
+
+*/
 }
 
 #ifndef USE_ALTERNATIVE_CRC
