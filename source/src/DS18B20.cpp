@@ -136,8 +136,13 @@ double DS18B20::get_temperature() const {
 
 
 void DS18B20::start() const {
-  m_one_wire.reset();
-  m_one_wire.check();
+
+  int present = 0;
+  while (!present) {
+    m_one_wire.reset();  // Reset sensor
+    present = m_one_wire.check(); // Wait for presence pulse
+  }
+
   sleep_us(2);
 
   // Send ROM command
