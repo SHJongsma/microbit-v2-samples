@@ -9,14 +9,13 @@ x Bij foute CRC waarschuwing printen en temperatuur niet opslaan
 x UpdateSample functie toevoegen
 x create_fiber aan roepen met updatesample functie en dan `gewoon' oude waarde meteen teruggeven <== Lijkt niet te werken
 x Expliciet checken wanneer de conversie klaar is <== Lijkt alsof het instantaan is
-- Resultaat van presence pulse check daadwerkelijk gebruiken
+x Resultaat van presence pulse check daadwerkelijk gebruiken
 - ROM code/ID proberen uit te lezen
 - Aan de hand van uitgelezen ROM CRC berekening checken
 - Configuratie kunnen updaten
 - Spelen met timings voor hopelijk een robuuster resultaat/ Nagaan wat sommige timings `doen' op basis van documentatie
-- Proberen een CodalComponent van de temperatuursensor te maken en dan de idlecallback implementeren
+(- Proberen een CodalComponent van de temperatuursensor te maken en dan de idlecallback implementeren) <-- Voegt niet zo veel toe
 - Gekopieerde functies nalopen op basis van documentatie
-- ROM uitlezen
 
 - Bezig met communicatie met netwerkmodule:
   - W5500 bibliotheek etc toevoegen
