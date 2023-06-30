@@ -18,6 +18,7 @@
 // MicroBitPin *pin = &uBit.io.P13;
 
 #include <memory>
+#include <functional>
 
 #include "logger.h"
 #include "one_wire.h"
@@ -44,6 +45,9 @@ private:
 
   int check() const; // Check for a presence pulse
   void start() const;
+
+  void read_bytes(const size_t buffer_size, unsigned char *byte_buffer,
+    std::function<void()> read_function, const size_t max_tries = 15) const;
 
   unsigned char m_ID[6];
 
