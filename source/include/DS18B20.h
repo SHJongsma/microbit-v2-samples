@@ -37,14 +37,15 @@ public:
 
   void update_sample() const;
 
-  void read_ROM();
 
 private:
   // Private member functions
+  void read_ROM();
 
-  int check() const; // Check what?
+  int check() const; // Check for a presence pulse
   void start() const;
 
+  unsigned char m_ID[6];
 
   // Private member variables
   const OneWire &m_one_wire;

@@ -101,7 +101,8 @@ DS18B20::DS18B20(const OneWire &one_wire, const std::shared_ptr<Logger> &logger)
   m_one_wire(one_wire),
   m_logger(logger) {
 
-  // Nothing to be done (yet)
+  // Read and store the ID
+  read_ROM();
 
 }
 
@@ -272,6 +273,7 @@ void DS18B20::read_ROM() {
       ++count;
   }
 
+/*
   uint8_t crc = OneWire::compute_crc(byte_buffer, 7); // Compute CRC over the first seven bytes
 
   // NOTE: Store the ROM code
@@ -279,8 +281,11 @@ void DS18B20::read_ROM() {
   int nchar = sprintf(buffer, "(%d, %d, %d, %d, %d, %d, %d, %d, crc = %d).", (int) byte_buffer[0], (int) byte_buffer[1],
   byte_buffer[2], byte_buffer[3], byte_buffer[4], byte_buffer[5], byte_buffer[6], byte_buffer[7], crc);
   m_logger->info("Got bytes: " + std::string(buffer));
+*/
 
-
+  // Store the ID (skip family code and CRC)
+  for (size_t i = 0; i < 6; ++i)
+    m_ID[i] = byte_buffer[i+1];
 
   // Return
   return;
