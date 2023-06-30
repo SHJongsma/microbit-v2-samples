@@ -202,42 +202,6 @@ void DS18B20::update_sample() const {
 
   });
 
-/*
-  size_t count(0);
-  while (true) {
-    m_one_wire.reset();
-
-    if (!m_one_wire.check()) { // Checks for presence pulse
-      m_logger->info("DS18B20::update_sample ~ Presence pulse returned 0.");
-      continue;
-    }
-
-    sleep_us(2);
-
-    // Send ROM command over one wire
-    m_one_wire.write_byte(OneWire::SKIP_ROM);
-
-    // Moet hier nog een pauze tussen?
-
-    // Send function command over one wire
-    m_one_wire.write_byte(READ_SCRATCH);
-
-    // Read all bytes
-    for (size_t i = 0; i < 9; ++i) {
-      byte_buffer[i]  = m_one_wire.read_byte();
-      sleep_us(100); // Wait a while <-- Check if this is long or short enough !!!
-    }
-
-    uint8_t crc = OneWire::compute_crc(byte_buffer, 8); // Compute CRC over the first eight bytes
-    if (byte_buffer[8] == crc || count > max_tries)
-      break;
-    else
-      ++count;
-  }
-
-  if (count >= 15)
-    m_logger->warn("DS18B20::update_sample ~ reached maximum number of 15 tries.");
-*/
   // Get the least significant byte
   const unsigned char LSB = byte_buffer[0];
 
@@ -298,38 +262,6 @@ void DS18B20::read_ROM() {
   read_bytes(8, byte_buffer, [this]() { m_one_wire.write_byte(OneWire::READ_ROM); });
 
 /*
-  const size_t max_tries = 15;
-
-  unsigned char byte_buffer[8];
-  size_t count(0);
-  while (true) {
-    m_one_wire.reset();
-
-    if (!m_one_wire.check()) { // Checks for presence pulse
-      m_logger->info("DS18B20::update_sample ~ Presence pulse returned 0.");
-      continue;
-    }
-
-    sleep_us(2);
-
-    // Send ROM command over one wire
-    m_one_wire.write_byte(OneWire::READ_ROM);
-
-    // Read all bytes
-    for (size_t i = 0; i < 8; ++i) {
-      byte_buffer[i]  = m_one_wire.read_byte();
-      sleep_us(100); // Wait a while <-- Check if this is long or short enough !!!
-    }
-
-    uint8_t crc = OneWire::compute_crc(byte_buffer, 7); // Compute CRC over the first seven bytes
-    if (byte_buffer[7] == crc || count > max_tries)
-      break;
-    else
-      ++count;
-  }
-*/
-
-
   uint8_t crc = OneWire::compute_crc(byte_buffer, 7); // Compute CRC over the first seven bytes
 
   // NOTE: Store the ROM code
@@ -337,7 +269,7 @@ void DS18B20::read_ROM() {
   int nchar = sprintf(buffer, "(%d, %d, %d, %d, %d, %d, %d, %d, crc = %d).", (int) byte_buffer[0], (int) byte_buffer[1],
   byte_buffer[2], byte_buffer[3], byte_buffer[4], byte_buffer[5], byte_buffer[6], byte_buffer[7], crc);
   m_logger->info("Got bytes: " + std::string(buffer));
-
+*/
 
   // Store the ID (skip family code and CRC)
   for (size_t i = 0; i < 6; ++i)
