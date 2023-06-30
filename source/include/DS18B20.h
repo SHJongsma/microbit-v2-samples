@@ -37,12 +37,13 @@ public:
 
   void update_sample() const;
 
+  void read_ROM();
+
 private:
   // Private member functions
 
   int check() const; // Check what?
   void start() const;
-
 
 
   // Private member variables

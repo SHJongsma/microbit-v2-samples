@@ -240,5 +240,53 @@ void DS18B20::update_sample() const {
   return;
 }
 
+void DS18B20::read_ROM() {
+
+  const size_t max_tries = 15;
+
+  unsigned char byte_buffer[8];
+  size_t count(0);
+  while (true) {
+    m_one_wire.reset();
+
+    if (!m_one_wire.check()) { // Checks for presence pulse
+      m_logger->info("DS18B20::update_sample ~ Presence pulse returned 0.");
+      continue;
+    }
+
+    sleep_us(2);
+
+    // Send ROM command over one wire
+    m_one_wire.write_byte(OneWire::READ_ROM);
+
+    // Read all bytes
+    for (size_t i = 0; i < 8; ++i) {
+      byte_buffer[i]  = m_one_wire.read_byte();
+      sleep_us(100); // Wait a while <-- Check if this is long or short enough !!!
+    }
+
+    uint8_t crc = OneWire::compute_crc(byte_buffer, 7); // Compute CRC over the first seven bytes
+    if (byte_buffer[7] == crc || count > max_tries)
+      break;
+    else
+      ++count;
+  }
+
+  uint8_t crc = OneWire::compute_crc(byte_buffer, 7); // Compute CRC over the first seven bytes
+
+  // NOTE: Store the ROM code
+  char buffer[60];
+  int nchar = sprintf(buffer, "(%d, %d, %d, %d, %d, %d, %d, %d, crc = %d).", (int) byte_buffer[0], (int) byte_buffer[1],
+  byte_buffer[2], byte_buffer[3], byte_buffer[4], byte_buffer[5], byte_buffer[6], byte_buffer[7], crc);
+  m_logger->info("Got bytes: " + std::string(buffer));
+
+
+
+  // Return
+  return;
+}
+
+
+
 } // Closing brace for namespace
 
