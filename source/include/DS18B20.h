@@ -37,11 +37,9 @@ public:
   // Constructor
   DS18B20(const OneWire &one_wire, const std::shared_ptr<Logger> &logger);
 
-
   double get_temperature() const;
 
   void update_config(const resolution_t res, const unsigned char TH = 75, const unsigned char TL = 70);
-
 
 private:
   // Private member functions
@@ -51,7 +49,7 @@ private:
   std::tuple<unsigned char, unsigned char, unsigned char> read_config() const;
 
   int check() const; // Check for a presence pulse
-  void start() const;
+  void start(const unsigned char function_code = CONVERT) const;
 
   void read_bytes(const size_t buffer_size, unsigned char *byte_buffer,
     std::function<void()> read_function, const size_t max_tries = 15) const;

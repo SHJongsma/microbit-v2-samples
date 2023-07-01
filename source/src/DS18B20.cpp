@@ -74,8 +74,8 @@ std::string double_to_string(const double &x) {
 
 double compute_temperature(const unsigned char LSB, const unsigned char MSB, const unsigned char config) {
 
-  double conversion;
-  int shift;
+  double conversion = 0.0625;
+  int shift = 0;
   switch (config >> 4) {
     case (0):
       conversion  = 0.5;
@@ -90,6 +90,7 @@ double compute_temperature(const unsigned char LSB, const unsigned char MSB, con
       shift       = 1;
       break;
     case (3):
+    default:
       conversion  = 0.0625;
       shift       = 0;
       break;
@@ -117,8 +118,6 @@ double compute_temperature(const unsigned char LSB, const unsigned char MSB, con
 } // Closing brace for anonymous namespace
 
 namespace shj {
-
-
 
 // Implemenation of the constructor
 DS18B20::DS18B20(const OneWire &one_wire, const std::shared_ptr<Logger> &logger) :
@@ -160,7 +159,7 @@ double DS18B20::get_temperature() const {
 
 
 
-void DS18B20::start() const {
+void DS18B20::start(const unsigned char function_code) const {
 
   int present = 0;
   while (!present) {
@@ -174,7 +173,7 @@ void DS18B20::start() const {
   m_one_wire.write_byte(OneWire::SKIP_ROM);
 
   // Send function command
-  m_one_wire.write_byte(CONVERT);
+  m_one_wire.write_byte(function_code);
 }
 
 
@@ -219,11 +218,12 @@ void DS18B20::update_sample() const {
 
   });
 
+/*
   // NOTE: Store the ROM code
   nchar = sprintf(buffer, "(%d, %d, %d, %d, %d, %d, %d, %d, crc = %d).", (int) byte_buffer[0], (int) byte_buffer[1],
   byte_buffer[2], byte_buffer[3], byte_buffer[4], byte_buffer[5], byte_buffer[6], byte_buffer[7], byte_buffer[8]);
   m_logger->info("Got bytes: " + std::string(buffer));
-
+*/
 
   // Get the least significant byte
   const unsigned char LSB = byte_buffer[0];
@@ -317,7 +317,7 @@ std::tuple<unsigned char, unsigned char, unsigned char> DS18B20::read_config() c
 
   });
 
-
+/*
   uint8_t crc = OneWire::compute_crc(byte_buffer, 8); // Compute CRC over the first seven bytes
 
   // NOTE: Store the ROM code
@@ -325,12 +325,11 @@ std::tuple<unsigned char, unsigned char, unsigned char> DS18B20::read_config() c
   int nchar = sprintf(buffer, "(%d, %d, %d, %d, %d, %d, %d, %d, crc = %d).", (int) byte_buffer[0], (int) byte_buffer[1],
   byte_buffer[2], byte_buffer[3], byte_buffer[4], byte_buffer[5], byte_buffer[6], byte_buffer[7], crc);
   m_logger->info("Got bytes: " + std::string(buffer));
+*/
 
   // Return the config
   return {byte_buffer[2], byte_buffer[3], byte_buffer[4]};
 }
-
-
 
 void DS18B20::update_config(const resolution_t res, const unsigned char TH, const unsigned char TL) {
 
@@ -354,19 +353,8 @@ void DS18B20::update_config(const resolution_t res, const unsigned char TH, cons
   // Store the value to compare later on
   const unsigned char compare = byte_buffer[2];
 
-  int present = 0;
-  while (!present) {
-    m_one_wire.reset();  // Reset sensor
-    present = m_one_wire.check(); // Wait for presence pulse
-  }
-
-  sleep_us(2);
-
-  // Send ROM command
-  m_one_wire.write_byte(OneWire::SKIP_ROM);
-
-  // Send ROM command
-  m_one_wire.write_byte(WRITE_SCRATCH);
+  // Call start function
+  start(WRITE_SCRATCH);
 
   // Send the bytes
   for (size_t i = 0; i < 3; ++i)
@@ -380,22 +368,8 @@ void DS18B20::update_config(const resolution_t res, const unsigned char TH, cons
 
   // Check if temperatures are correctly stored
   if ((TH == th) && (TL == tl) && (compare == read_res)) {
-    m_logger->info("update_config: ~ values stored correctly, now storing to EEPROM.");
-
-   present = 0;
-    while (!present) {
-      m_one_wire.reset();  // Reset sensor
-      present = m_one_wire.check(); // Wait for presence pulse
-    }
-
-    sleep_us(2);
-
-    // Send ROM command
-    m_one_wire.write_byte(OneWire::SKIP_ROM);
-
-    // Send ROM command
-    m_one_wire.write_byte(COPY_SCRATCH);
-    m_logger->info("update_config: ~ EEPROM updated.");
+    // Call start function
+    start(COPY_SCRATCH);
   }
 
   // Return
