@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <functional>
+#include <tuple>
 
 #include "logger.h"
 #include "one_wire.h"
@@ -30,18 +31,24 @@ namespace shj {
 class DS18B20 {
 
 public:
+
+  enum class resolution_t {nine, ten, eleven, twelve};
+
   // Constructor
   DS18B20(const OneWire &one_wire, const std::shared_ptr<Logger> &logger);
 
 
   double get_temperature() const;
 
-  void update_sample() const;
+  void update_config(const resolution_t res, const unsigned char TH = 75, const unsigned char TL = 70);
 
 
 private:
   // Private member functions
   void read_ROM();
+  void update_sample() const;
+
+  std::tuple<unsigned char, unsigned char, unsigned char> read_config() const;
 
   int check() const; // Check for a presence pulse
   void start() const;
@@ -63,6 +70,7 @@ private:
   static const unsigned char CONVERT       = 0x44;
   static const unsigned char READ_SCRATCH  = 0xBE;
   static const unsigned char WRITE_SCRATCH = 0x4E;
+  static const unsigned char COPY_SCRATCH =  0x48;
 
 }; // Closing brace for class definition
 

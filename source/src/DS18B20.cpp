@@ -72,18 +72,42 @@ std::string double_to_string(const double &x) {
   return result;
 }
 
-double compute_temperature(const unsigned char LSB, const unsigned char MSB) { // <== Maybe add parameter for resolution
+double compute_temperature(const unsigned char LSB, const unsigned char MSB, const unsigned char config) {
+
+  double conversion;
+  int shift;
+  switch (config >> 4) {
+    case (0):
+      conversion  = 0.5;
+      shift       = 3;
+      break;
+    case (1):
+      conversion  = 0.25;
+      shift       = 2;
+      break;
+    case (2):
+      conversion  = 0.125;
+      shift       = 1;
+      break;
+    case (3):
+      conversion  = 0.0625;
+      shift       = 0;
+      break;
+  }
 
   unsigned int temp = MSB & 0x07;
   temp = (temp << 8) | LSB;
+
+  if (shift)
+    temp >>= shift;
 
   double result;
   // Check if temperature is negative
   if ((MSB & 0xF8) == 0xF8) {
 		temp = (temp ^ 0xFFFF) + 1; // NOTE: Negative temperatures might not be computed correctly
-		result = temp * (-0.0625);
+		result = temp * (-conversion);
 	}else{
-		result = temp * 0.0625; // Resolutie nog instellen
+		result = temp * conversion; // Resolutie nog instellen
 	}
 
   // Return the result
@@ -156,7 +180,6 @@ void DS18B20::start() const {
 
 void DS18B20::update_sample() const {
 
-  const size_t max_tries = 15;
   const size_t max_ticks = 12097;
 
   // We need to obtain a new temperature from the sensor
@@ -179,15 +202,9 @@ void DS18B20::update_sample() const {
     m_logger->warn("DS18B20::update_sample ~ Maximum conversion time timed out.");
   }
 
-  char buffer[50];
+  char buffer[60];
   int nchar = sprintf(buffer, "Conversion took = %d us.", tick * 62);
   m_logger->debug("DS18B20::update_sample ~ " + std::string(buffer));
-
-
-  //fiber_sleep(750); // NOTE: Zou eigenlijk (maximaal) 750 ms moeten zijn, maar
-                      // 100 us lijkt eigenlijk net zo goed te werken
-  //sleep_us(100); // Conversion can take up to 750 MILLIseconds
-                 // NOTE, that this can be checked by listening for a one send by the sensor
 
   unsigned char byte_buffer[9];
   read_bytes(9, byte_buffer, [this]() {
@@ -202,14 +219,23 @@ void DS18B20::update_sample() const {
 
   });
 
+  // NOTE: Store the ROM code
+  nchar = sprintf(buffer, "(%d, %d, %d, %d, %d, %d, %d, %d, crc = %d).", (int) byte_buffer[0], (int) byte_buffer[1],
+  byte_buffer[2], byte_buffer[3], byte_buffer[4], byte_buffer[5], byte_buffer[6], byte_buffer[7], byte_buffer[8]);
+  m_logger->info("Got bytes: " + std::string(buffer));
+
+
   // Get the least significant byte
   const unsigned char LSB = byte_buffer[0];
 
   // Get the most significant byte
   const unsigned char MSB = byte_buffer[1];
 
+  // Get the configuration
+  const unsigned char config = byte_buffer[4];
+
   // Store the temperature in cache
-  m_last_temperature = ::compute_temperature(LSB, MSB);
+  m_last_temperature = ::compute_temperature(LSB, MSB, config);
 
   // Update the time of the last read
   m_last_read = codal::system_timer_current_time();
@@ -236,10 +262,8 @@ void DS18B20::read_bytes(const size_t buffer_size, unsigned char *byte_buffer,
     read_function();
 
     // Read all bytes
-    for (size_t i = 0; i < buffer_size; ++i) {
+    for (size_t i = 0; i < buffer_size; ++i)
       byte_buffer[i]  = m_one_wire.read_byte();
-      sleep_us(100); // Wait a while <-- Check if this is long or short enough !!!
-    }
 
     uint8_t crc = OneWire::compute_crc(byte_buffer, buffer_size - 1); // Compute CRC over the first 'buffer_size - 1' bytes
     if (byte_buffer[buffer_size - 1] == crc || count > max_tries)
@@ -274,6 +298,105 @@ void DS18B20::read_ROM() {
   // Store the ID (skip family code and CRC)
   for (size_t i = 0; i < 6; ++i)
     m_ID[i] = byte_buffer[i+1];
+
+  // Return
+  return;
+}
+
+std::tuple<unsigned char, unsigned char, unsigned char> DS18B20::read_config() const {
+
+  unsigned char byte_buffer[9];
+
+  read_bytes(9, byte_buffer, [this]() {
+
+    // Send ROM command over one wire
+    m_one_wire.write_byte(OneWire::SKIP_ROM);
+
+    // Send function command over one wire
+    m_one_wire.write_byte(READ_SCRATCH);
+
+  });
+
+
+  uint8_t crc = OneWire::compute_crc(byte_buffer, 8); // Compute CRC over the first seven bytes
+
+  // NOTE: Store the ROM code
+  char buffer[60];
+  int nchar = sprintf(buffer, "(%d, %d, %d, %d, %d, %d, %d, %d, crc = %d).", (int) byte_buffer[0], (int) byte_buffer[1],
+  byte_buffer[2], byte_buffer[3], byte_buffer[4], byte_buffer[5], byte_buffer[6], byte_buffer[7], crc);
+  m_logger->info("Got bytes: " + std::string(buffer));
+
+  // Return the config
+  return {byte_buffer[2], byte_buffer[3], byte_buffer[4]};
+}
+
+
+
+void DS18B20::update_config(const resolution_t res, const unsigned char TH, const unsigned char TL) {
+
+  unsigned char byte_buffer[3] = {TH, TL, 0};
+
+  switch (res) {
+    case resolution_t::nine:
+      byte_buffer[2] = 0x1F;
+      break;
+    case resolution_t::ten:
+      byte_buffer[2] = 0x3F;
+      break;
+    case resolution_t::eleven:
+      byte_buffer[2] = 0x5F;
+      break;
+    case resolution_t::twelve:
+      byte_buffer[2] = 0x7F;
+      break;
+  }
+
+  // Store the value to compare later on
+  const unsigned char compare = byte_buffer[2];
+
+  int present = 0;
+  while (!present) {
+    m_one_wire.reset();  // Reset sensor
+    present = m_one_wire.check(); // Wait for presence pulse
+  }
+
+  sleep_us(2);
+
+  // Send ROM command
+  m_one_wire.write_byte(OneWire::SKIP_ROM);
+
+  // Send ROM command
+  m_one_wire.write_byte(WRITE_SCRATCH);
+
+  // Send the bytes
+  for (size_t i = 0; i < 3; ++i)
+    m_one_wire.write_byte(byte_buffer[i]);
+
+  // Next, read the config to verify the result
+  unsigned char th;
+  unsigned char tl;
+  unsigned char read_res;
+  std::tie(th, tl, read_res) = read_config();
+
+  // Check if temperatures are correctly stored
+  if ((TH == th) && (TL == tl) && (compare == read_res)) {
+    m_logger->info("update_config: ~ values stored correctly, now storing to EEPROM.");
+
+   present = 0;
+    while (!present) {
+      m_one_wire.reset();  // Reset sensor
+      present = m_one_wire.check(); // Wait for presence pulse
+    }
+
+    sleep_us(2);
+
+    // Send ROM command
+    m_one_wire.write_byte(OneWire::SKIP_ROM);
+
+    // Send ROM command
+    m_one_wire.write_byte(COPY_SCRATCH);
+    m_logger->info("update_config: ~ EEPROM updated.");
+  }
 
   // Return
   return;
