@@ -73,40 +73,6 @@ private:
 }; // Closing brace for class definition
 
 
-
-
-
-/*
-  //% OBSOLETE ?
-int Temperature(int p) {
-
-    switch(p){
-      case 0: pin = &uBit.io.P0; break;
-      case 1: pin = &uBit.io.P1; break;
-      case 2: pin = &uBit.io.P2; break;
-      case 5: pin = &uBit.io.P5; break;
-      case 8: pin = &uBit.io.P8; break;
-      case 11: pin = &uBit.io.P11; break;
-      case 12: pin = &uBit.io.P12; break;
-      case 13: pin = &uBit.io.P13; break;
-      case 14: pin = &uBit.io.P14; break;
-      case 15: pin = &uBit.io.P15; break;
-      case 16: pin = &uBit.io.P16; break;
-      default: pin = &uBit.io.P0;
-    }
-    float data1,data2,data3;
-    data1=DS18B20GetTemperture();
-    data2=DS18B20GetTemperture();
-    if((data2-data1)>2){
-        return data1*10;
-    }else{
-        return data2*10;
-    }
-
-  }
-
-*/
-
 } // Closing brace for namespace
 
 #endif // DS18B20_HH
