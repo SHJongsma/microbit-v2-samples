@@ -370,6 +370,8 @@ void DS18B20::update_config(const resolution_t res, const unsigned char TH, cons
   if ((TH == th) && (TL == tl) && (compare == read_res)) {
     // Call start function
     start(COPY_SCRATCH);
+  } else {
+    m_logger->warn("DS18B20::update_config ~ Failed to update configuration.");
   }
 
   // Return
